@@ -1,10 +1,3 @@
-# # ## DELETE FILES
-# # for file_name in files_to_delete:
-# #     source_path= os.path.join(current_dir + '/home/valcann/backupsTo', file_name)
-
-# #     if os.path.exists(source_path) and os.path.isfile(source_path):
-# #         print(source_path)
-# #         os.remove(source_path)
 import os
 import datetime
 import shutil
@@ -36,7 +29,7 @@ def list_files_to_copy_and_delete(source_folder, time_offset):
 
     files_to_delete = []
     files_to_copy = []
-    infos = []
+    all_files = []
 
     for file in files:
         file_path = os.path.join(source_folder, file)
@@ -49,17 +42,18 @@ def list_files_to_copy_and_delete(source_folder, time_offset):
         else:
             files_to_copy.append(get_file_info(file_path))
         
-        infos.append(get_file_info(file_path))
+        all_files.append(get_file_info(file_path))
 
-    return files_to_copy, files_to_delete, infos
+    return files_to_copy, files_to_delete, all_files
 
 def format_log(log={}):
     formatted_log = (
         '#####' +
-        '\n' + log['name'] +
-        '\n' + str(log['file_size']) +
-        '\n' + log['created_at'] +
-        '\n' + log['updated_at'] +
+        '\n' + 'nome: ' + log['name'] +
+        '\n' + 'tamanho: ' + str(log['file_size']) +
+        '\n' + 'criado_em: ' + log['created_at'] +
+        '\n' + 'modificado_em: ' + log['updated_at'] +
+        '\n' + 'log_gerado_em: ' + str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) +
         '\n\n')
 
     return formatted_log
@@ -94,13 +88,27 @@ def copy_files(source_folder, destination_folder, files_to_copy):
         except Exception as e:
             print(f"Error copying {file_name}: {str(e)}")
 
+def delete_files(source_folder, files_to_delete):
+    for file in files_to_delete:
+        file_name = file['name']
+        
+        source_path = os.path.join(source_folder, file_name)
+
+        if os.path.exists(source_path) and os.path.isfile(source_path):
+            print(source_path)
+            os.remove(source_path)
+
 def main():
     source_folder, destination_folder, main_folder = get_paths()
+
+    ## recomendation: set to 15 minutes (15 * 60) for testing with local files
+    ## 3 days must be: 3 * 24 * 60 * 60
     time_offset = 3 * 24 * 60 * 60
 
-    files_to_copy, files_to_delete, infos = list_files_to_copy_and_delete(source_folder, time_offset)
+    files_to_copy, files_to_delete, all_files = list_files_to_copy_and_delete(source_folder, time_offset)
 
-    create_log(main_folder, 'backupsFrom.log', infos)
+    create_log(main_folder, 'backupsFrom.log', all_files)
+    delete_files(source_folder, files_to_delete)
 
     try:
         copy_files(source_folder, destination_folder, files_to_copy)
